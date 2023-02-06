@@ -112,11 +112,11 @@
     </build>
 
     <dependencies>
-        <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>cloudhsm</artifactId>
-            <version>${cloudhsmVersion}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.amazonaws</groupId>-->
+<!--            <artifactId>cloudhsm</artifactId>-->
+<!--            <version>${cloudhsmVersion}</version>-->
+<!--        </dependency>-->
         <!-- Bouncy Castle, for generating a certificate to sign. -->
         <dependency>
             <groupId>org.bouncycastle</groupId>

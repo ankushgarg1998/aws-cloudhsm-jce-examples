@@ -16,23 +16,16 @@
  */
 package com.amazonaws.cloudhsm.examples;
 
-import com.amazonaws.cloudhsm.jce.provider.CloudHsmProvider;
-import com.amazonaws.cloudhsm.jce.jni.exception.ProviderInitializationException;
-import java.io.IOException;
-import java.security.Key;
-import java.security.Security;
-import java.security.AuthProvider;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.login.AccountLockedException;
+import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
-
-import com.amazonaws.cloudhsm.jce.jni.exception.AuthenticationException;
-import com.amazonaws.cloudhsm.jce.jni.exception.AuthenticationExceptionCause;
-import com.amazonaws.cloudhsm.jce.jni.exception.AccountAlreadyLoggedInException;
-import com.amazonaws.cloudhsm.jce.jni.exception.FailedLoginException;
-import com.amazonaws.cloudhsm.jce.jni.exception.AccountLockedException;
+import java.io.IOException;
+import java.security.AuthProvider;
+import java.security.Security;
 
 /**
  * This sample demonstrates the different methods of authentication that can be used with the JCE.
@@ -47,6 +40,7 @@ public class LoginRunner {
             "\t--method [explicit, system-properties, environment]\n" +
             "\t--user <username>\n" +
             "\t--password <password>\n";
+    private static final String CLASS_NAME_CLOUD_HSM_PROVIDER = "com.amazonaws.cloudhsm.jce.provider.CloudHsmProvider";
 
     public static void main(String[] args) throws Exception {
         if (args.length % 2 != 0) {
@@ -86,13 +80,13 @@ public class LoginRunner {
             }
         }
 
-        if (method.equals("explicit")) {
+//        if (method.equals("explicit")) {
             loginWithExplicitCredentials(user, pass);
-        } else if (method.equals("system-properties")) {
-            loginUsingJavaProperties(user, pass);
-        } else if (method.equals("environment")) {
-            loginWithEnvVariables();
-        }
+//        } else if (method.equals("system-properties")) {
+//            loginUsingJavaProperties(user, pass);
+//        } else if (method.equals("environment")) {
+//            loginWithEnvVariables();
+//        }
     }
 
     public static void help() {
@@ -106,23 +100,18 @@ public class LoginRunner {
      * @param pass Password for CU user.
      */
     public static void loginWithExplicitCredentials(String user, String pass) {
-        AuthProvider provider;
+        AuthProvider cloudHSMProvider;
         try {
-            provider = (AuthProvider) Security.getProvider(CloudHsmProvider.PROVIDER_NAME);
-            if (provider == null) {
-                provider = new CloudHsmProvider();
-            }
-            Security.addProvider(provider);
-        } catch (IOException | ProviderInitializationException | LoginException ex) {
+            cloudHSMProvider = (java.security.AuthProvider) Class.forName(CLASS_NAME_CLOUD_HSM_PROVIDER).newInstance();
+            Security.addProvider(cloudHSMProvider);
+        } catch (Exception ex) {
             System.out.println(ex);
             return;
         }
 
         ApplicationCallBackHandler loginHandler = new ApplicationCallBackHandler(user + ":" + pass);
         try {
-            provider.login(null, loginHandler);
-        } catch(AccountAlreadyLoggedInException e) {
-            System.out.printf("\n Account is already logged in \n\n");
+            cloudHSMProvider.login(null, loginHandler);
         } catch(AccountLockedException e) {
             System.out.printf("\n Account is locked \n\n");
         } catch(FailedLoginException e) {
@@ -130,12 +119,14 @@ public class LoginRunner {
             e.printStackTrace();
         } catch (LoginException e) {
             e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         System.out.printf("\nLogin successful!\n\n");
 
         // Explicit logout is only available when you explicitly login using
         // AuthProvider's Login method
-        logout(provider);
+        logout(cloudHSMProvider);
 
         System.out.printf("\nLogout successful!\n\n");
     }
@@ -147,28 +138,28 @@ public class LoginRunner {
      * @param user Name of CU user in HSM
      * @param pass Password for CU user.
      */
-    public static void loginUsingJavaProperties(String user, String pass) throws Exception {
-        System.setProperty("HSM_USER", user);
-        System.setProperty("HSM_PASSWORD", pass);
-
-        // When provider is constructed it will use the system properties to automatically
-        // log the user in.
-        Security.addProvider(new CloudHsmProvider());
-
-        Key aesKey = null;
-
-        try {
-            aesKey = SymmetricKeys.generateAESKey(256, "Implicit Java Properties Login Key");
-        } catch (AuthenticationException e) {
-            AuthenticationExceptionCause cause = e.getCloudHsmExceptionCause();
-            if (cause == AuthenticationExceptionCause.UNAUTHENTICATED) {
-                System.out.printf("\nProvider is not authenticated\n\n");
-            }
-            e.printStackTrace();
-        }
-        assert(aesKey != null);
-        System.out.printf("\nLogin successful!\n\n");
-    }
+//    public static void loginUsingJavaProperties(String user, String pass) throws Exception {
+//        System.setProperty("HSM_USER", user);
+//        System.setProperty("HSM_PASSWORD", pass);
+//
+//        // When provider is constructed it will use the system properties to automatically
+//        // log the user in.
+//        Security.addProvider(new CloudHsmProvider());
+//
+//        Key aesKey = null;
+//
+//        try {
+//            aesKey = SymmetricKeys.generateAESKey(256, "Implicit Java Properties Login Key");
+//        } catch (AuthenticationException e) {
+//            AuthenticationExceptionCause cause = e.getCloudHsmExceptionCause();
+//            if (cause == AuthenticationExceptionCause.UNAUTHENTICATED) {
+//                System.out.printf("\nProvider is not authenticated\n\n");
+//            }
+//            e.printStackTrace();
+//        }
+//        assert(aesKey != null);
+//        System.out.printf("\nLogin successful!\n\n");
+//    }
 
     /**
      * This implicit login method uses environment variables to login. To use this method, you must set the following
@@ -179,26 +170,26 @@ public class LoginRunner {
      * AuthProvider is not required to use implicit credentials. When you try to perform operations, the login
      * will be done automatically.
      */
-    public static void loginWithEnvVariables() throws Exception {
-
-        // When provider is constructed it will use the environment variables to automatically
-        // log the user in.
-        Security.addProvider(new CloudHsmProvider());
-
-        Key aesKey = null;
-
-        try {
-            aesKey = SymmetricKeys.generateAESKey(256, "Implicit Java Properties Login Key");
-        } catch (AuthenticationException e) {
-            AuthenticationExceptionCause cause = e.getCloudHsmExceptionCause();
-            if (cause == AuthenticationExceptionCause.UNAUTHENTICATED) {
-                System.out.printf("\nProvider is not authenticated\n\n");
-            }
-            e.printStackTrace();
-        }
-
-        System.out.printf("\nLogin successful!\n\n");
-    }
+//    public static void loginWithEnvVariables() throws Exception {
+//
+//        // When provider is constructed it will use the environment variables to automatically
+//        // log the user in.
+//        Security.addProvider(new CloudHsmProvider());
+//
+//        Key aesKey = null;
+//
+//        try {
+//            aesKey = SymmetricKeys.generateAESKey(256, "Implicit Java Properties Login Key");
+//        } catch (AuthenticationException e) {
+//            AuthenticationExceptionCause cause = e.getCloudHsmExceptionCause();
+//            if (cause == AuthenticationExceptionCause.UNAUTHENTICATED) {
+//                System.out.printf("\nProvider is not authenticated\n\n");
+//            }
+//            e.printStackTrace();
+//        }
+//
+//        System.out.printf("\nLogin successful!\n\n");
+//    }
 
     /**
      * Logout will force the provider to end your session.
