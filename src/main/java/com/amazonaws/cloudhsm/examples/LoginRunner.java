@@ -103,7 +103,8 @@ public class LoginRunner {
         AuthProvider cloudHSMProvider;
         try {
             cloudHSMProvider = (java.security.AuthProvider) Class.forName(CLASS_NAME_CLOUD_HSM_PROVIDER).newInstance();
-            Security.addProvider(cloudHSMProvider);
+            int pos = Security.addProvider(cloudHSMProvider);
+            System.out.println("Position: " + pos);
         } catch (Exception ex) {
             System.out.println(ex);
             return;
