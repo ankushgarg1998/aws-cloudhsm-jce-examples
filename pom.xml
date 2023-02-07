@@ -19,8 +19,9 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <cloudhsmVersion>5.5.0</cloudhsmVersion>
-                <cloudhsmJarPath>/opt/cloudhsm/java/cloudhsm-jce-${cloudhsmVersion}.jar</cloudhsmJarPath>
+                <cloudhsmVersion>5.7.0</cloudhsmVersion>
+<!--                <cloudhsmJarPath>/opt/cloudhsm/java/cloudhsm-jce-${cloudhsmVersion}.jar</cloudhsmJarPath>-->
+                <cloudhsmJarPath>/Users/ag/Desktop/cloudHSM/cloudhsm-jce-${cloudhsmVersion}.jar</cloudhsmJarPath>
             </properties>
         </profile>
     </profiles>

@@ -20,7 +20,6 @@ import com.amazonaws.cloudhsm.jce.provider.CloudHsmProvider;
 import com.amazonaws.cloudhsm.jce.provider.attributes.KeyAttribute;
 import com.amazonaws.cloudhsm.jce.provider.attributes.KeyAttributesMap;
 import com.amazonaws.cloudhsm.jce.provider.attributes.KeyAttributesMapBuilder;
-
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -30,16 +29,17 @@ import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
+import javax.crypto.SecretKey;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.KeyStore.PasswordProtection;
-import java.security.KeyStore.PrivateKeyEntry;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Security;
@@ -115,13 +115,8 @@ public class KeyStoreExampleRunner {
             return;
         }
 
-        final String label;
-        if (null == labelArg) {
-            label = "Keystore Example Keypair";
-        } else {
-            label = labelArg;
-        }
-        final String privateLabel = label + ":Private";
+        final String entryLabel = "entryLabel";
+        final String keyLabel = "keyLabel";
 
         final KeyStore keyStore = KeyStore.getInstance(CloudHsmProvider.CLOUDHSM_KEYSTORE_TYPE);
         try {
@@ -134,44 +129,26 @@ public class KeyStoreExampleRunner {
             keyStore.load(null, null);
         }
 
-        final PasswordProtection passwordProtection =
-                new PasswordProtection(password.toCharArray());
-        System.out.println("Searching for example key pair and certificate...");
+        final PasswordProtection passwordProtection = new PasswordProtection(password.toCharArray());
 
-        /*
-         * Generates the key pair if not found and signs a certificate with the key and stores it in the
-         * KeyStore.
-         */
-        if (!keyStore.containsAlias(privateLabel)) {
-            System.out.println("No entry found for '" + privateLabel + "', creating a keypair...");
-            final KeyAttributesMap requiredPublicKeyAttributes =
-                    new KeyAttributesMapBuilder().put(KeyAttribute.VERIFY, true).build();
-            final KeyAttributesMap requiredPrivateKeyAttributes =
-                    new KeyAttributesMapBuilder().put(KeyAttribute.SIGN, true).build();
-            final KeyPair keyPair =
-                    AsymmetricKeys.generateRSAKeyPair(
-                            2048, label, requiredPublicKeyAttributes, requiredPrivateKeyAttributes);
+        System.out.println("Searching for example key");
+        if (!keyStore.containsAlias(entryLabel)) {
+            System.out.println("No entry found for '" + entryLabel + "', creating a secretKey...");
+            final KeyAttributesMap keyAttributesMap = new KeyAttributesMapBuilder()
+                    .put(KeyAttribute.ENCRYPT, true)
+                    .put(KeyAttribute.DECRYPT, true)
+                    .build();
+            final Key aesKey = SymmetricKeys.generateAESKey(2048, keyLabel, keyAttributesMap);
+            final KeyStore.SecretKeyEntry aesKeyEntry = new KeyStore.SecretKeyEntry((SecretKey) aesKey);
 
-            /** Generate a certificate and associate the chain with the private key. */
-            final Certificate selfSignedCert = createAndSignCertificate(keyPair);
-            final Certificate[] chain = new Certificate[] {selfSignedCert};
-            final PrivateKeyEntry entry = new PrivateKeyEntry(keyPair.getPrivate(), chain);
-
-            /*
-             * Set the entry using the label as the alias and save the store. The alias must match the
-             * private key label.
-             */
-            keyStore.setEntry(privateLabel, entry, passwordProtection);
+            keyStore.setEntry(entryLabel, aesKeyEntry, passwordProtection);
 
             final FileOutputStream outstream = new FileOutputStream(keystoreFile);
             keyStore.store(outstream, password.toCharArray());
             outstream.close();
+            System.out.println("Keystore saved");
         }
 
-        final PrivateKeyEntry keyEntry =
-                (PrivateKeyEntry) keyStore.getEntry(privateLabel, passwordProtection);
-        final String name = keyEntry.getCertificate().toString();
-        System.out.printf("Found private key %s with certificate %s%n", label, name);
     }
 
     private static void help() {
