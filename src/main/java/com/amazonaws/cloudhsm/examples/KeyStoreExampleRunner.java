@@ -138,7 +138,7 @@ public class KeyStoreExampleRunner {
                     .put(KeyAttribute.ENCRYPT, true)
                     .put(KeyAttribute.DECRYPT, true)
                     .build();
-            final Key aesKey = SymmetricKeys.generateAESKey(2048, keyLabel, keyAttributesMap);
+            final Key aesKey = SymmetricKeys.generateAESKey(256, keyLabel, keyAttributesMap);
             final KeyStore.SecretKeyEntry aesKeyEntry = new KeyStore.SecretKeyEntry((SecretKey) aesKey);
 
             keyStore.setEntry(entryLabel, aesKeyEntry, passwordProtection);
