@@ -23,9 +23,14 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.AccountLockedException;
 import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.AuthProvider;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.Security;
+import java.security.cert.CertificateException;
 
 /**
  * This sample demonstrates the different methods of authentication that can be used with the JCE.
@@ -99,7 +104,7 @@ public class LoginRunner {
      * @param user Name of CU user in HSM.
      * @param pass Password for CU user.
      */
-    public static void loginWithExplicitCredentials(String user, String pass) {
+    public static void loginWithExplicitCredentials(String user, String pass) throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException {
         AuthProvider cloudHSMProvider;
         try {
             cloudHSMProvider = (java.security.AuthProvider) Class.forName(CLASS_NAME_CLOUD_HSM_PROVIDER).newInstance();
@@ -124,6 +129,17 @@ public class LoginRunner {
             e.printStackTrace();
         }
         System.out.printf("\nLogin successful!\n\n");
+
+        final KeyStore keyStore = KeyStore.getInstance("CloudHSM");
+        try {
+            final FileInputStream instream = new FileInputStream("./keystore");
+            // This call to keyStore.load() will open the CloudHSM keystore file with the supplied
+            // password.
+            keyStore.load(instream, "password".toCharArray());
+        } catch (final IOException | NoSuchAlgorithmException | CertificateException ex) {
+            System.err.println("Keystore not found, loading an empty store");
+            keyStore.load(null, null);
+        }
 
         // Explicit logout is only available when you explicitly login using
         // AuthProvider's Login method
