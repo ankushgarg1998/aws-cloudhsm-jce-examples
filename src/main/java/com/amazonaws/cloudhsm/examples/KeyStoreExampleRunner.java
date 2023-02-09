@@ -116,15 +116,15 @@ public class KeyStoreExampleRunner {
         final String entryLabel = "entryLabel";
 
         final KeyStore keyStore = KeyStore.getInstance(CloudHsmProvider.CLOUDHSM_KEYSTORE_TYPE);
-//        try {
-//            final FileInputStream instream = new FileInputStream(keystoreFile);
-//            // This call to keyStore.load() will open the CloudHSM keystore file with the supplied
-//            // password.
-//            keyStore.load(instream, password.toCharArray());
-//        } catch (final FileNotFoundException ex) {
-//            System.err.println("Keystore not found, loading an empty store");
+        try {
+            final FileInputStream instream = new FileInputStream(keystoreFile);
+            // This call to keyStore.load() will open the CloudHSM keystore file with the supplied
+            // password.
+            keyStore.load(instream, password.toCharArray());
+        } catch (final FileNotFoundException ex) {
+            System.err.println("Keystore not found, loading an empty store");
         keyStore.load(null, null);
-//        }
+        }
 
 //        final PasswordProtection passwordProtection = new PasswordProtection(password.toCharArray());
 //
