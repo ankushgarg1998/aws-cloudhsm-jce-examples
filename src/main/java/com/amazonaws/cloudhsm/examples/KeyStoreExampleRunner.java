@@ -17,9 +17,6 @@
 package com.amazonaws.cloudhsm.examples;
 
 import com.amazonaws.cloudhsm.jce.provider.CloudHsmProvider;
-import com.amazonaws.cloudhsm.jce.provider.attributes.KeyAttribute;
-import com.amazonaws.cloudhsm.jce.provider.attributes.KeyAttributesMap;
-import com.amazonaws.cloudhsm.jce.provider.attributes.KeyAttributesMapBuilder;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -32,14 +29,11 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import javax.crypto.SecretKey;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyStore;
-import java.security.KeyStore.PasswordProtection;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Security;
@@ -118,36 +112,38 @@ public class KeyStoreExampleRunner {
         final String entryLabel = "entryLabel";
 
         final KeyStore keyStore = KeyStore.getInstance(CloudHsmProvider.CLOUDHSM_KEYSTORE_TYPE);
-        try {
-            final FileInputStream instream = new FileInputStream(keystoreFile);
-            // This call to keyStore.load() will open the CloudHSM keystore file with the supplied
-            // password.
-            keyStore.load(instream, password.toCharArray());
-        } catch (final FileNotFoundException ex) {
-            System.err.println("Keystore not found, loading an empty store");
-            keyStore.load(null, null);
-        }
+//        try {
+//            final FileInputStream instream = new FileInputStream(keystoreFile);
+//            // This call to keyStore.load() will open the CloudHSM keystore file with the supplied
+//            // password.
+//            keyStore.load(instream, password.toCharArray());
+//        } catch (final FileNotFoundException ex) {
+//            System.err.println("Keystore not found, loading an empty store");
+//            keyStore.load(null, null);
+//        }
 
-        final PasswordProtection passwordProtection = new PasswordProtection(password.toCharArray());
+//        final PasswordProtection passwordProtection = new PasswordProtection(password.toCharArray());
+//
+//        System.out.println("Searching for example key");
+//        if (!keyStore.containsAlias(entryLabel)) {
+//            System.out.println("No entry found for '" + entryLabel + "', creating a secretKey...");
+//            final KeyAttributesMap keyAttributesMap = new KeyAttributesMapBuilder()
+//                    .put(KeyAttribute.ENCRYPT, true)
+//                    .put(KeyAttribute.DECRYPT, true)
+//                    .build();
+//            final Key aesKey = SymmetricKeys.generateAESKey(256, entryLabel, keyAttributesMap);
+//            final KeyStore.SecretKeyEntry aesKeyEntry = new KeyStore.SecretKeyEntry((SecretKey) aesKey);
+//
+//            keyStore.setEntry(entryLabel, aesKeyEntry, passwordProtection);
+//
+//            final FileOutputStream outstream = new FileOutputStream(keystoreFile);
+//            keyStore.store(outstream, password.toCharArray());
+//            outstream.close();
+//            System.out.println("Keystore saved");
+//        }
 
-        System.out.println("Searching for example key");
-        if (!keyStore.containsAlias(entryLabel)) {
-            System.out.println("No entry found for '" + entryLabel + "', creating a secretKey...");
-            final KeyAttributesMap keyAttributesMap = new KeyAttributesMapBuilder()
-                    .put(KeyAttribute.ENCRYPT, true)
-                    .put(KeyAttribute.DECRYPT, true)
-                    .build();
-            final Key aesKey = SymmetricKeys.generateAESKey(256, entryLabel, keyAttributesMap);
-            final KeyStore.SecretKeyEntry aesKeyEntry = new KeyStore.SecretKeyEntry((SecretKey) aesKey);
-
-            keyStore.setEntry(entryLabel, aesKeyEntry, passwordProtection);
-
-            final FileOutputStream outstream = new FileOutputStream(keystoreFile);
-            keyStore.store(outstream, password.toCharArray());
-            outstream.close();
-            System.out.println("Keystore saved");
-        }
-
+        SecretKey secretKey = (SecretKey) keyStore.getKey(entryLabel, null);
+        System.out.println(secretKey.getAlgorithm());
     }
 
     private static void help() {
