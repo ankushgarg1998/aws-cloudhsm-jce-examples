@@ -119,7 +119,7 @@ public class KeyStoreExampleRunner {
 //            keyStore.load(instream, password.toCharArray());
 //        } catch (final FileNotFoundException ex) {
 //            System.err.println("Keystore not found, loading an empty store");
-//            keyStore.load(null, null);
+            keyStore.load(null, null);
 //        }
 
 //        final PasswordProtection passwordProtection = new PasswordProtection(password.toCharArray());
