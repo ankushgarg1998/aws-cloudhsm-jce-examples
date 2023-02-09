@@ -113,7 +113,7 @@ public class KeyStoreExampleRunner {
             return;
         }
 
-        final String entryLabel = "entryLabel";
+        final String entryLabel = "entryLabel2";
 
         final KeyStore keyStore = KeyStore.getInstance(CloudHsmProvider.CLOUDHSM_KEYSTORE_TYPE);
         try {
