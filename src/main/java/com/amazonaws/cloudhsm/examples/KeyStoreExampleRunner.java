@@ -26,12 +26,13 @@ import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
-import javax.crypto.SecretKey;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
@@ -40,9 +41,11 @@ import java.security.Security;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
 
 /**
  * KeyStoreExampleRunner demonstrates how to load a keystore, get a key entry, sign and store a
@@ -142,8 +145,20 @@ public class KeyStoreExampleRunner {
 //            System.out.println("Keystore saved");
 //        }
 
-        SecretKey secretKey = (SecretKey) keyStore.getKey(entryLabel, null);
-        System.out.println(secretKey.getAlgorithm());
+        Key key = keyStore.getKey(entryLabel, null);
+        System.out.println(key.getAlgorithm());
+        System.out.println(Base64.getEncoder().encodeToString(key.getEncoded()));
+
+        String aad = "16 bytes of data";
+        String plainText = "Ankush Garg";
+        List<byte[]> result = AESGCMEncryptDecryptRunner.encrypt(key, plainText.getBytes(StandardCharsets.UTF_8), aad.getBytes());
+
+        byte[] iv = result.get(0);
+        byte[] cipherText = result.get(1);
+
+        System.out.println("---");
+        System.out.println(Base64.getEncoder().encodeToString(iv));
+        System.out.println(Base64.getEncoder().encodeToString(cipherText));
     }
 
     private static void help() {
