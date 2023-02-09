@@ -116,15 +116,15 @@ public class KeyStoreExampleRunner {
         final String entryLabel = "entryLabel3";
 
         final KeyStore keyStore = KeyStore.getInstance(CloudHsmProvider.CLOUDHSM_KEYSTORE_TYPE);
-        try {
-            final FileInputStream instream = new FileInputStream(keystoreFile);
-            // This call to keyStore.load() will open the CloudHSM keystore file with the supplied
-            // password.
-            keyStore.load(instream, password.toCharArray());
-        } catch (final FileNotFoundException ex) {
-            System.err.println("Keystore not found, loading an empty store");
-        keyStore.load(null, null);
-        }
+//        try {
+//            final FileInputStream instream = new FileInputStream(keystoreFile);
+//            // This call to keyStore.load() will open the CloudHSM keystore file with the supplied
+//            // password.
+//            keyStore.load(instream, password.toCharArray());
+//        } catch (final FileNotFoundException ex) {
+//            System.err.println("Keystore not found, loading an empty store");
+            keyStore.load(null, null);
+//        }
 
 //        System.out.println("Searching for example key");
 //        if (!keyStore.containsAlias(entryLabel)) {
@@ -142,7 +142,7 @@ public class KeyStoreExampleRunner {
 //            System.out.println("Keystore saved");
 //        }
 
-        Key key = keyStore.getKey(entryLabel, password.toCharArray());
+        Key key = keyStore.getKey(entryLabel, null);
         System.out.println(key.getAlgorithm());
         String encoded = Optional.ofNullable(key.getEncoded())
                 .map(Base64.getEncoder()::encodeToString)
