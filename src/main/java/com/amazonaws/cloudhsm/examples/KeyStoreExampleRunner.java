@@ -17,9 +17,6 @@
 package com.amazonaws.cloudhsm.examples;
 
 import com.amazonaws.cloudhsm.jce.provider.CloudHsmProvider;
-import com.amazonaws.cloudhsm.jce.provider.attributes.KeyAttribute;
-import com.amazonaws.cloudhsm.jce.provider.attributes.KeyAttributesMap;
-import com.amazonaws.cloudhsm.jce.provider.attributes.KeyAttributesMapBuilder;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -31,9 +28,9 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyPair;
@@ -44,9 +41,12 @@ import java.security.Security;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * KeyStoreExampleRunner demonstrates how to load a keystore, get a key entry, sign and store a
@@ -127,41 +127,41 @@ public class KeyStoreExampleRunner {
         }
 
 //        final KeyStore.PasswordProtection passwordProtection = new KeyStore.PasswordProtection(password.toCharArray());
-        System.out.println("Searching for example key");
-        if (!keyStore.containsAlias(entryLabel)) {
-            System.out.println("No entry found for '" + entryLabel + "', creating a secretKey...");
-            final KeyAttributesMap keyAttributesMap = new KeyAttributesMapBuilder()
-                    .put(KeyAttribute.ENCRYPT, true)
-                    .put(KeyAttribute.DECRYPT, true)
-                    .build();
-            final Key aesKey = SymmetricKeys.generateAESKey(256, entryLabel, keyAttributesMap);
+//        System.out.println("Searching for example key");
+//        if (!keyStore.containsAlias(entryLabel)) {
+//            System.out.println("No entry found for '" + entryLabel + "', creating a secretKey...");
+//            final KeyAttributesMap keyAttributesMap = new KeyAttributesMapBuilder()
+//                    .put(KeyAttribute.ENCRYPT, true)
+//                    .put(KeyAttribute.DECRYPT, true)
+//                    .build();
+//            final Key aesKey = SymmetricKeys.generateAESKey(256, entryLabel, keyAttributesMap);
 //            final KeyStore.SecretKeyEntry aesKeyEntry = new KeyStore.SecretKeyEntry((SecretKey) aesKey, keyAttributesMap);
 //            keyStore.setEntry(entryLabel, aesKeyEntry, passwordProtection);
-            keyStore.setKeyEntry(entryLabel, aesKey, password.toCharArray(), null);
+//            keyStore.setKeyEntry(entryLabel, aesKey, password.toCharArray(), null);
+//
+//            final FileOutputStream outstream = new FileOutputStream(keystoreFile);
+//            keyStore.store(outstream, password.toCharArray());
+//            outstream.close();
+//            System.out.println("Keystore saved");
+//        }
 
-            final FileOutputStream outstream = new FileOutputStream(keystoreFile);
-            keyStore.store(outstream, password.toCharArray());
-            outstream.close();
-            System.out.println("Keystore saved");
-        }
+        Key key = keyStore.getKey(entryLabel, password.toCharArray());
+        System.out.println(key.getAlgorithm());
+        String encoded = Optional.ofNullable(key.getEncoded())
+                .map(Base64.getEncoder()::encodeToString)
+                .orElse("Null in encoded");
+        System.out.println(encoded);
 
-//        Key key = keyStore.getKey(entryLabel, null);
-//        System.out.println(key.getAlgorithm());
-//        String encoded = Optional.ofNullable(key.getEncoded())
-//                .map(Base64.getEncoder()::encodeToString)
-//                .orElse("Null in encoded");
-//        System.out.println(encoded);
-//
-//        String aad = "16 bytes of data";
-//        String plainText = "Ankush Garg";
-//        List<byte[]> result = AESGCMEncryptDecryptRunner.encrypt(key, plainText.getBytes(StandardCharsets.UTF_8), aad.getBytes());
-//
-//        byte[] iv = result.get(0);
-//        byte[] cipherText = result.get(1);
-//
-//        System.out.println("---");
-//        System.out.println(Base64.getEncoder().encodeToString(iv));
-//        System.out.println(Base64.getEncoder().encodeToString(cipherText));
+        String aad = "16 bytes of data";
+        String plainText = "Ankush Garg";
+        List<byte[]> result = AESGCMEncryptDecryptRunner.encrypt(key, plainText.getBytes(StandardCharsets.UTF_8), aad.getBytes());
+
+        byte[] iv = result.get(0);
+        byte[] cipherText = result.get(1);
+
+        System.out.println("---");
+        System.out.println(Base64.getEncoder().encodeToString(iv));
+        System.out.println(Base64.getEncoder().encodeToString(cipherText));
     }
 
     private static void help() {
