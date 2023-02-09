@@ -46,6 +46,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * KeyStoreExampleRunner demonstrates how to load a keystore, get a key entry, sign and store a
@@ -59,13 +60,13 @@ public class KeyStoreExampleRunner {
 
     private static final String helpString =
             "KeyStoreExampleRunner\n"
-                + "This sample demonstrates how to load and store keys using a keystore.\n\n"
-                + "Options\n"
-                + "\t--help\t\t\tDisplay this message.\n"
-                + "\t--store <filename>\t\tPath of the keystore.\n"
-                + "\t--password <password>\t\tPassword for the keystore (not your CU password).\n"
-                + "\t--label <label>\t\t\tLabel to store the key and certificate under.\n"
-                + "\t--list\t\t\tList all the keys in the keystore.\n\n";
+                    + "This sample demonstrates how to load and store keys using a keystore.\n\n"
+                    + "Options\n"
+                    + "\t--help\t\t\tDisplay this message.\n"
+                    + "\t--store <filename>\t\tPath of the keystore.\n"
+                    + "\t--password <password>\t\tPassword for the keystore (not your CU password).\n"
+                    + "\t--label <label>\t\t\tLabel to store the key and certificate under.\n"
+                    + "\t--list\t\t\tList all the keys in the keystore.\n\n";
 
     public static void main(final String[] args) throws Exception {
         try {
@@ -122,7 +123,7 @@ public class KeyStoreExampleRunner {
 //            keyStore.load(instream, password.toCharArray());
 //        } catch (final FileNotFoundException ex) {
 //            System.err.println("Keystore not found, loading an empty store");
-            keyStore.load(null, null);
+        keyStore.load(null, null);
 //        }
 
 //        final PasswordProtection passwordProtection = new PasswordProtection(password.toCharArray());
@@ -147,7 +148,10 @@ public class KeyStoreExampleRunner {
 
         Key key = keyStore.getKey(entryLabel, null);
         System.out.println(key.getAlgorithm());
-        System.out.println(Base64.getEncoder().encodeToString(key.getEncoded()));
+        String encoded = Optional.ofNullable(key.getEncoded())
+                .map(Base64.getEncoder()::encodeToString)
+                .orElse("Null in encoded");
+        System.out.println(encoded);
 
         String aad = "16 bytes of data";
         String plainText = "Ankush Garg";
@@ -165,7 +169,9 @@ public class KeyStoreExampleRunner {
         System.out.println(helpString);
     }
 
-    /** List all the keys in the keystore. */
+    /**
+     * List all the keys in the keystore.
+     */
     private static void listKeys(final String keystoreFile, final String password)
             throws Exception {
         final KeyStore keyStore = KeyStore.getInstance(CloudHsmProvider.PROVIDER_NAME);
@@ -183,10 +189,12 @@ public class KeyStoreExampleRunner {
         }
     }
 
-    /** Generate a certificate signed by a given keypair. */
+    /**
+     * Generate a certificate signed by a given keypair.
+     */
     private static Certificate createAndSignCertificate(final KeyPair keyPair)
             throws CertificateException, NoSuchProviderException, NoSuchAlgorithmException,
-                    SignatureException, InvalidKeyException, OperatorCreationException {
+            SignatureException, InvalidKeyException, OperatorCreationException {
         final X500Name x500Name =
                 new X500Name("C=US, ST=Washington, L=Seattle, O=Amazon, OU=AWS, CN=CloudHSM");
 
